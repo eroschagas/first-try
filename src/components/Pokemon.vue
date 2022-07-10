@@ -23,7 +23,6 @@
 </template>
 
 <script>
-// import { computed } from "vue";
 export default {
     name: "tryingFetch",
     data: function () {
@@ -32,17 +31,14 @@ export default {
             items: [],
             n: 0,
             maxPoke: false,
-            perPage: 22,
-            pageFirst: 1,
-            pageLast: 22,
         };
     },
     methods: {
         fetchData: async function () {
+            // await new Promise((r) => setTimeout(r, 100));
             const pokeFetch = [];
-            for (let index = this.pageFirst; index < this.pageLast; index++) {
+            for (let index = this.n + 1; index < this.n + 22; index++) {
                 try {
-                    // await new Promise((r) => setTimeout(r, 1000));
                     const response = await fetch(
                         `https://pokeapi.co/api/v2/pokemon/${index}`
                     );
@@ -68,8 +64,6 @@ export default {
                 return;
             }
             this.n = this.n + 21;
-            this.pageFirst = this.n;
-            this.pageLast = this.n + 21;
 
             setTimeout(function () {
                 that.fetchData();
