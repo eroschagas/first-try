@@ -9,7 +9,8 @@
             >
                 <h1 class="poke-name">{{ item.id }} - {{ item.name }}</h1>
                 <div class="poke-img">
-                    <img v-show="item.img" v-bind:src="item.img" />
+                    <img v-if="item.img" v-bind:src="item.img" />
+                    <h1 v-else>loading</h1>
                 </div>
             </a>
         </div>
@@ -31,16 +32,13 @@ export default {
             allPoke: [],
             items: [],
             n: 0,
-            maxPoke: false,
-            perPage: 22,
-            pageFirst: 1,
-            pageLast: 22,
+            maxPoke: 10000,
         };
     },
     methods: {
         fetchData: async function () {
             const pokeFetch = [];
-            for (let index = this.pageFirst; index < this.pageLast; index++) {
+            for (let index = 1; index < this.maxPoke; index++) {
                 try {
                     // await new Promise((r) => setTimeout(r, 1000));
                     const response = await fetch(
@@ -55,41 +53,31 @@ export default {
                             .front_default,
                     });
                 } catch {
-                    this.maxPoke = true;
                     break;
                 }
             }
 
-            this.items = pokeFetch;
+            this.allPoke = pokeFetch;
+            this.items = this.allPoke.slice(0 + this.n, 21 + this.n);
+            console.log(this.items);
         },
         handleNext: function () {
-            let that = this;
-            if (this.maxPoke >= true) {
+            if (this.n >= this.maxPoke - 21) {
                 return;
             }
             this.n = this.n + 21;
-            this.pageFirst = this.n;
-            this.pageLast = this.n + 21;
-
-            setTimeout(function () {
-                that.fetchData();
-            }, 100);
+            this.items = this.allPoke.slice(0 + this.n, 21 + this.n);
         },
         handlePrev: function () {
-            let that = this;
             if (this.n == 0) {
                 return;
             }
             this.n = this.n - 21;
-            this.maxPoke = false;
-            setTimeout(function () {
-                that.fetchData();
-            }, 500);
+            this.items = this.allPoke.slice(0 + this.n, 21 + this.n);
         },
     },
     mounted() {
         this.fetchData();
-        console.log(document.readyState);
     },
 };
 // const x = computed(() => {
