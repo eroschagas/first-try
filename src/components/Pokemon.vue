@@ -1,16 +1,17 @@
 <template>
-    <div>
+    <div v-if="this.items.length > 0">
         <div class="card-wrapper">
-            <div
+            <a
+                href="#"
                 class="poke-card"
                 v-for="(item, index) in items"
                 v-bind:key="index"
             >
-                <h1 class="poke-name">{{ item.name }}</h1>
+                <h1 class="poke-name">{{ item.id }} - {{ item.name }}</h1>
                 <div class="poke-img">
                     <img v-bind:src="item.img" />
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="nav-menu">
@@ -18,38 +19,62 @@
             <h1 v-on:click="handleNext">next</h1>
         </div>
     </div>
+    <div v-else>loading</div>
 </template>
 
 <script>
+// import { computed } from "vue";
 export default {
     name: "tryingFetch",
     data: function () {
         return {
-            url: "",
-            items: [{ name: "a" }, { name: "b" }],
-            ready: false,
+            allPoke: [],
+            items: [],
+            n: 0,
+            maxPoke: 905,
         };
     },
     methods: {
         fetchData: async function () {
-            for (let index = 1; index < 21; index++) {
+            const pokeFetch = [];
+            for (let index = 1; index < this.maxPoke; index++) {
                 // await new Promise((r) => setTimeout(r, 1000));
                 const response = await fetch(
                     `https://pokeapi.co/api/v2/pokemon/${index}`
                 );
                 const json = await response.json();
-                this.items.push({
+                pokeFetch.push({
                     index: index,
+                    id: json.id,
                     name: json.name,
-                    img: json.sprites.front_default,
+                    img: json.sprites.other["official-artwork"].front_default,
                 });
             }
+
+            this.allPoke = pokeFetch;
+            this.items = this.allPoke.slice(0 + this.n, 21 + this.n);
             console.log(this.items);
+        },
+        handleNext: function () {
+            if (this.n >= this.maxPoke - 21) {
+                return;
+            }
+            this.n = this.n + 21;
+            this.items = this.allPoke.slice(0 + this.n, 21 + this.n);
+        },
+        handlePrev: function () {
+            if (this.n == 0) {
+                return;
+            }
+            this.n = this.n - 21;
+            this.items = this.allPoke.slice(0 + this.n, 21 + this.n);
         },
     },
     mounted() {
         this.fetchData();
-        this.ready = true;
     },
 };
+// const x = computed(() => {
+//     return this.fetchData();
+// });
 </script>
