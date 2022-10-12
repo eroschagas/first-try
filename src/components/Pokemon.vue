@@ -1,10 +1,11 @@
 <template>
-    <div v-if="this.items.length > 0">
+    <div class="background" v-if="this.items.length > 0">
+        <div :class="[pageTurn ? 'turn-page' : '']"></div>
         <div class="card-wrapper">
             <a
                 href="#"
                 class="poke-card"
-                v-for="(item, index) in itemsSlice"
+                v-for="(item, index) in pokeSlice"
                 v-bind:key="index"
             >
                 <h1 class="poke-name">{{ item.id }} - {{ item.name }}</h1>
@@ -15,23 +16,36 @@
         </div>
 
         <div class="nav-menu">
-            <h1 v-on:click="handlePrev">previous</h1>
-            <h1 v-on:click="handleNext">next</h1>
+            <h1 @click="handlePrev">previous</h1>
+            <div v-for="(item, index) in pagesSlice" :key="index">
+                <h1
+                    :class="[
+                        'nav-pages',
+                        checkPage(item) ? '' : 'nav-page-highlight',
+                    ]"
+                    @click="goToPage(item)"
+                >
+                    {{ item }}
+                </h1>
+            </div>
+            <h1 @click="handleNext">next</h1>
         </div>
     </div>
-    <div v-else>loading</div>
+    <div class="poke-loading" v-else>loading</div>
 </template>
 
 <script>
 export default {
-    name: "tryingFetch",
-    data: function () {
+    name: "pokemonFetch",
+    data() {
         return {
             allPoke: [],
             items: [],
             page: 1,
             maxPoke: false,
             pokeshow: 21,
+            index: "",
+            pageTurn: false,
         };
     },
     computed: {
@@ -39,22 +53,37 @@ export default {
             return this.page * this.pokeshow - this.pokeshow;
         },
         pokemax() {
-            return this.page * 5 * this.pokeshow + 1;
+            return this.page * this.pokeshow;
         },
-        itemsSlice() {
-            return this.items.slice(this.pokemin, this.pokemin + this.pokeshow);
+        pokeSlice() {
+            return this.items.slice(this.pokemin, this.pokemax);
+        },
+        maxPages() {
+            return Math.ceil(this.index / this.pokeshow);
+        },
+        pages() {
+            var element = [];
+            for (let index = 1; index <= this.maxPages; index++) {
+                element.push(index);
+            }
+            return element;
+        },
+        pagesSlice() {
+            if (this.page < 4) {
+                return this.pages.slice(0, 7);
+            } else if (this.page >= 4 && this.page < this.maxPages - 3) {
+                return this.pages.slice(this.page - 4, this.page + 3);
+            } else {
+                return this.pages.slice(this.maxPages - 7, this.maxPages);
+            }
         },
     },
-    watch: {
-        items(newvalue) {
-            this.items = newvalue;
-        },
-    },
+    watch: {},
     methods: {
-        fetchData: async function () {
+        fetchData: async function (pokemin, pokemax) {
             // await new Promise((r) => setTimeout(r, 100));
             const pokeFetch = [];
-            for (let index = 1; index < this.pokemax; index++) {
+            for (let index = pokemin; index < pokemax; index++) {
                 try {
                     const response = await fetch(
                         `https://pokeapi.co/api/v2/pokemon/${index}`
@@ -67,37 +96,60 @@ export default {
                         img: json.sprites.other["official-artwork"]
                             .front_default,
                     });
+                    this.index = index;
                 } catch {
-                    this.maxPoke = true;
                     break;
                 }
             }
 
             this.items = pokeFetch;
         },
-        handleNext: function () {
-            if (this.maxPoke >= true) {
+        goToPage: function (item) {
+            if (this.pageTurn == true) {
                 return;
             }
-            this.page++;
-            this.fetchData();
-            console.log("file: Pokemon.vue ~ line 85 ~ this.items", this.items);
+            this.pageTurn = true;
+            setTimeout(() => {
+                this.page = item;
+            }, 200);
+            setTimeout(() => {
+                this.pageTurn = false;
+            }, 1000);
+        },
+        checkPage: function (item) {
+            if (this.page != item) {
+                return true;
+            }
+            return false;
+        },
+        handleNext: function () {
+            if (this.pokemax >= this.index || this.pageTurn == true) {
+                return;
+            }
+            this.pageTurn = true;
+            setTimeout(() => {
+                this.page++;
+            }, 200);
+            setTimeout(() => {
+                this.pageTurn = false;
+            }, 1000);
         },
         handlePrev: function () {
-            if (this.page == 1) {
+            if (this.page == 1 || this.pageTurn == true) {
                 return;
             }
-            this.page--;
-            this.maxPoke = false;
-            this.fetchData();
+            this.pageTurn = true;
+            setTimeout(() => {
+                this.page--;
+            }, 200);
+            setTimeout(() => {
+                this.pageTurn = false;
+            }, 1000);
         },
     },
     mounted() {
-        this.fetchData();
-        console.log(document.readyState);
+        this.fetchData(1, 2000);
     },
+    updated() {},
 };
-// const x = computed(() => {
-//     return this.fetchData();
-// });
 </script>
